@@ -112,8 +112,13 @@ jobs:
           lz4 -d vbmeta.img.lz4 vbmeta.img
           rm vbmeta.img.lz4
           printf "$(printf '\\x%02X' 3)" | dd of="vbmeta.img" bs=1 seek=123 count=1 conv=notrunc &> /dev/null
-          tar cvf ${{ env.latest_shortversion }}_patched_vbmeta.tar vbmeta.img
-          rm vbmeta.img
+          FILE_NAME="${{ env.latest_shortversion }}_patched_vbmeta"
+          lz4 -B6 --content-size -q "vbmeta.img" "vbmeta.img.lz4"
+          tar cvf "$FILE_NAME.tar" vbmeta.img.lz4
+          CHECKSUM="$(md5sum "$FILE_NAME.tar" | cut -d " " -f 1 | sed 's/ //')"
+          echo -n "$CHECKSUM" >> "$FILE_NAME.tar" \
+            && echo "  $FILE_NAME.tar" >> "$FILE_NAME.tar" \
+            && mv "$FILE_NAME.tar" "$FILE_NAME.tar.md5"
 
       - name: Extract vendor and vendor_dlkm partition and create lpdump
         if: env.need_update == 1
@@ -173,6 +178,20 @@ jobs:
           lz4 -d recovery.img.lz4 recovery.img
           rm recovery.img.lz4
 
+      - name: Generate patched recovery
+        if: env.need_update == 1
+        run: |
+          export PATH=$PATH:$(pwd)/tools/bin
+          cp recovery.img patched_recovery.img
+          PATH=$PATH:$(pwd)/tools/bin bash tools/bin/recovery_patch.sh patched_recovery.img
+          FILE_NAME="${{ env.latest_shortversion }}_patched_recovery"
+          lz4 -B6 --content-size -q "patched_recovery.img" "recovery.img.lz4"
+          tar cvf "$FILE_NAME.tar" recovery.img.lz4
+          CHECKSUM="$(md5sum "$FILE_NAME.tar" | cut -d " " -f 1 | sed 's/ //')"
+          echo -n "$CHECKSUM" >> "$FILE_NAME.tar" \
+            && echo "  $FILE_NAME.tar" >> "$FILE_NAME.tar" \
+            && mv "$FILE_NAME.tar" "$FILE_NAME.tar.md5"
+
       - name: Create a firmware package for UN1CA build system.
         if: env.need_update == 1
         run: |
@@ -227,7 +246,7 @@ jobs:
             ${{ env.home_csc_tar }}
             ${{ env.latest_shortversion }}_kernel.tar
             ${{ env.pit_file }}
-            ${{ env.latest_shortversion }}_patched_vbmeta.tar
+            ${{ env.latest_shortversion }}_patched_vbmeta.tar.md5
             ${{ env.latest_shortversion }}_vendor.zip
             ${{ env.latest_shortversion }}_vendor_dlkm.zip
             ${{ env.latest_shortversion }}_system_dlkm.zip
@@ -238,3 +257,4 @@ jobs:
             recovery.img
             lpdump
             ${{ env.latest_shortversion }}_UN1CA_firmware_package.zip
+            ${{ env.latest_shortversion }}_patched_recovery.tar.md5
