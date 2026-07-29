@@ -51,7 +51,7 @@ magiskboot cpio '../ramdisk.cpio' 'extract system/lib64/libselinux.so system/lib
 magiskboot cpio '../ramdisk.cpio' 'extract system/etc/init/hw/init.rc system/etc/init/hw/init.rc'
 magiskboot cpio '../ramdisk.cpio' 'extract prop.default prop.default'
 
-# Recovery patches for Samsung TP1A recovery images
+# Recovery patches for Samsung AP2A recovery images
 
 # Make SELinux permissive
 # FILE: system/lib64/libselinux.so
@@ -68,41 +68,41 @@ HEX_PATCH "system/lib64/libselinux.so" "55d03bd5f303002a" "55d03bd5f3031f2a"
 # Function: verify_package
 # From:
 #   cmp x8,x9
-#   b.ne 0x001f773c
+#   b.ne 0x00203d8c
 # To:
 #   nop
 #   mov w19, #0x1
 
-HEX_PATCH "system/bin/recovery" "1f0109eb41170054" "1f2003d533008052"
+HEX_PATCH "system/bin/recovery" "1f0109eb81160054" "1f2003d533008052"
 
 # From:
 #   cmp x8, x9
-#   b.eq 0x001f73d8
+#   b.eq 0x00203a44
 #   mov w0,#0x2
 # To:
 #   nop
-#   b 0x001f7448
+#   b 0x00203ab0
 #   mov w0,#0x2
 
-HEX_PATCH "system/bin/recovery" "1f0109eb000a005440008052" "1f2003d56c00001440008052"
+HEX_PATCH "system/bin/recovery" "1f0109eb6009005440008052" "1f2003d56600001440008052"
 
 # Allow fastbootd
 # FILE: system/bin/recovery
 
 # Function: getFastbootdPermission
-# From: cbz w0,0x0020d074
-# To: b 0x0020d084
+# From: b.eq 0x00213b88
+# To: b 0x00213b88
 
-HEX_PATCH "system/bin/recovery" "538d049460010034" "538d04940f000014"
+HEX_PATCH "system/bin/recovery" "2001597ac0000054" "2001597a06000014"
 
 # ADB always root
 # FILE: system/bin/adbd
 
 # Function: main
-# From: b.ne 0x001964f0
-# To: b 0x001964f0
+# From: b.ne 0x0019a850
+# To: b 0x0019a850
 
-HEX_PATCH "system/bin/adbd" "1f050071c1090054" "1f0500714e000014"
+HEX_PATCH "system/bin/adbd" "1f050071e1090054" "1f0500714f000014"
 
 # Enable ADB by default
 sed -i 's/persist\.sys\.usb\.config\=mtp/persist\.sys\.usb\.config\=mtp\,adb/g' "prop.default"
