@@ -1,6 +1,6 @@
 set -e
 
-# Credits to @salogiangri UN1CA
+# Credits to @salvogiangri UN1CA
 HEX_PATCH()
 {
     #_CHECK_NON_EMPTY_PARAM "FILE" "$1" || return 1
@@ -20,11 +20,11 @@ HEX_PATCH()
     TO="$(tr "[:upper:]" "[:lower:]" <<< "$TO")"
 
     if ! xxd -p -c 0 "$FILE" | grep -q "$FROM"; then
-        #LOGE "No \"$FROM\" match in ${FILE//$WORK_DIR/}"
+        echo "No \"$FROM\" match in $FILE"
         return 1
     fi
 
-    #LOG "- Patching \"$FROM\" to \"$TO\" in ${FILE//$WORK_DIR/}"
+    echo "Patching \"$FROM\" to \"$TO\" in $FILE"
     xxd -p -c 0 "$FILE" | sed "s/$FROM/$TO/" | xxd -r -p > "$FILE.tmp"
     mv "$FILE.tmp" "$FILE"
 
@@ -45,13 +45,13 @@ cd "$TMP_DIR"
 
 magiskboot unpack "$OUT_FILE"
 mkdir ramdisk_tmp; cd ramdisk_tmp
-magiskboot cpio '../ramdisk.cpio' 'extract system/bin/recovery system/bin/recovery'
 magiskboot cpio '../ramdisk.cpio' 'extract system/bin/adbd system/bin/adbd'
-magiskboot cpio '../ramdisk.cpio' 'extract system/lib64/libselinux.so system/lib64/libselinux.so'
+magiskboot cpio '../ramdisk.cpio' 'extract system/bin/recovery system/bin/recovery'
 magiskboot cpio '../ramdisk.cpio' 'extract system/etc/init/hw/init.rc system/etc/init/hw/init.rc'
+magiskboot cpio '../ramdisk.cpio' 'extract system/lib64/libselinux.so system/lib64/libselinux.so'
 magiskboot cpio '../ramdisk.cpio' 'extract prop.default prop.default'
 
-# Recovery patches for Samsung AP2A recovery images
+# Recovery patches for Samsung TP1A (A05s) recovery images
 
 # Make SELinux permissive
 # FILE: system/lib64/libselinux.so
@@ -68,54 +68,69 @@ HEX_PATCH "system/lib64/libselinux.so" "55d03bd5f303002a" "55d03bd5f3031f2a"
 # Function: verify_package
 # From:
 #   cmp x8,x9
-#   b.ne 0x00203d8c
+#   b.ne 0x001f9204
 # To:
 #   nop
 #   mov w19, #0x1
 
-HEX_PATCH "system/bin/recovery" "1f0109eb81160054" "1f2003d533008052"
+HEX_PATCH "system/bin/recovery" "1f0109eb41170054" "1f2003d533008052"
 
 # From:
 #   cmp x8, x9
-#   b.eq 0x00203a44
+#   b.eq 0x001f8dec
 #   mov w0,#0x2
 # To:
 #   nop
-#   b 0x00203ab0
+#   b 0x001f8f10
 #   mov w0,#0x2
 
-HEX_PATCH "system/bin/recovery" "1f0109eb6009005440008052" "1f2003d56600001440008052"
+HEX_PATCH "system/bin/recovery" "1f0109eba004005440008052" "1f2003d56e00001440008052"
+
+# Disregard missing ZIP metadata
+# FILE: system/bin/recovery
+
+# Function: ReadMetadataFromPackage
+# From: mov w19, wzr
+# To: mov w19, #0x1
+
+HEX_PATCH "system/bin/recovery" "f3031f2ad5000014" "33008052d5000014"
+HEX_PATCH "system/bin/recovery" "f3031f2a950200b9c6ffff17" "33008052950200b9c6ffff17"
 
 # Allow fastbootd
 # FILE: system/bin/recovery
 
 # Function: getFastbootdPermission
-# From: b.eq 0x00213b88
-# To: b 0x00213b88
+# From: mov w0, wzr
+# To: mov w0, #0x1
 
-HEX_PATCH "system/bin/recovery" "2001597ac0000054" "2001597a06000014"
+HEX_PATCH "system/bin/recovery" "c2f90394e0031f2a" "c2f9039420008052"
 
 # ADB always root
 # FILE: system/bin/adbd
 
 # Function: main
-# From: b.ne 0x0019a850
-# To: b 0x0019a850
+# From: b.ne 0x001964d4
+# To: b 0x001964d4
 
 HEX_PATCH "system/bin/adbd" "1f050071e1090054" "1f0500714f000014"
 
 # Enable ADB by default
 sed -i 's/persist\.sys\.usb\.config\=mtp/persist\.sys\.usb\.config\=mtp\,adb/g' "prop.default"
 sed -i 's/ro\.adb\.secure\=1/ro\.adb\.secure\=0/g' "prop.default"
+sed -i 's/ro\.debuggable\=0/ro\.debuggable\=1/g' "prop.default"
 
 echo "on boot" >> "system/etc/init/hw/init.rc"
 echo "    setprop service.adb.root 1" >> "system/etc/init/hw/init.rc"
 
-magiskboot cpio '../ramdisk.cpio' 'add 755 system/bin/recovery system/bin/recovery'
+# Spoof recovery SPL to 2023-08-01 to allow SPL downgrade
+sed -i 's/ro\.build\.version\.security_patch\=.*/ro\.build\.version\.security_patch\=2023-08-01/g' "prop.default"
+
 magiskboot cpio '../ramdisk.cpio' 'add 755 system/bin/adbd system/bin/adbd'
-magiskboot cpio '../ramdisk.cpio' 'add 644 system/lib64/libselinux.so system/lib64/libselinux.so'
+magiskboot cpio '../ramdisk.cpio' 'add 755 system/bin/recovery system/bin/recovery'
 magiskboot cpio '../ramdisk.cpio' 'add 644 system/etc/init/hw/init.rc system/etc/init/hw/init.rc'
+magiskboot cpio '../ramdisk.cpio' 'add 644 system/lib64/libselinux.so system/lib64/libselinux.so'
 magiskboot cpio '../ramdisk.cpio' 'add 644 prop.default prop.default'
+magiskboot cpio '../ramdisk.cpio' 'ln system/bin sbin'
 
 cd ..
 magiskboot repack "$OUT_FILE" recovery.img
