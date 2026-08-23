@@ -12,6 +12,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         include:
           - model: "SM-A057F"
