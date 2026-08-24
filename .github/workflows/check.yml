@@ -66,27 +66,18 @@ jobs:
           sudo wget -O /usr/bin/samfirm https://github.com/DavidArsene/samfirm.js/releases/download/v0.3.0/samfirm.js && sudo chmod +x /usr/bin/samfirm
           sudo modprobe erofs f2fs
 
-      - name: Install samloader
-        if: env.need_update == 1
-        run: |
-          python3 -m venv py_env
-          source py_env/bin/activate
-          pip3 install git+https://github.com/ananjaser1211/samloader.git
-          deactivate
-
       - name: Fetch firmware
         if: env.need_update == 1
         run: |
-          source py_env/bin/activate
           mkdir "${{ matrix.model }}_${{ matrix.csc }}"
-          # Pass -v flag to force samloader to download the specific current version
-          samloader -m ${{ matrix.model }} -r ${{ matrix.csc }} -i ${{ matrix.imei }} download -v "${{ env.latest_version }}" -O "${{ matrix.model }}_${{ matrix.csc }}"
           cd "${{ matrix.model }}_${{ matrix.csc }}"
-          unzip "*.zip"
-          rm -rvf "*.zip"
+          
+          # Direct cloud download from SamFw into GitHub runner
+          wget -U "Mozilla/5.0" -O firmware.zip "PASTE_SAMFW_DIRECT_LINK_HERE"
+          
+          unzip firmware.zip
+          rm -rvf firmware.zip
           cd ..
-          deactivate
-          rm -rf py_env
 
       - name: Get path of files
         if: env.need_update == 1
@@ -96,7 +87,7 @@ jobs:
           echo "cp_tar=`find -name CP*`" >> $GITHUB_ENV
           echo "csc_tar=`find -name CSC*`" >> $GITHUB_ENV
           echo "home_csc_tar=`find -name HOME_CSC*`" >> $GITHUB_ENV
-
+          
       - name: Check downloaded firmware version
         if: env.need_update == 1
         run: |
