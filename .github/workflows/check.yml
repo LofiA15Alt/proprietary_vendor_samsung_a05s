@@ -15,14 +15,14 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - model: "SM-A057F"
-            csc: "XID"
-            omc: "OLE"
-            imei: 357533641234561
-          - model: "SM-A057G"
-            csc: "EUX"
-            omc: "OXM"
-            imei: 352318720492768
+          - model: "SM-A155F"
+            csc: "XXV"
+            omc: "OLM"
+            imei: 357789866226118
+          - model: "SM-A245F"
+            csc: "THL"
+            omc: "OLM"
+            imei: 357181563031126
           - model: "SM-A057M"
             csc: "MXO"
             omc: "OWO"
