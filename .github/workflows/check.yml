@@ -73,7 +73,7 @@ jobs:
           cd "${{ matrix.model }}_${{ matrix.csc }}"
           
           # Direct cloud download from SamFw into GitHub runner
-          wget -U "Mozilla/5.0" -O firmware.zip "PASTE_SAMFW_DIRECT_LINK_HERE"
+          wget -U "Mozilla/5.0" -O firmware.zip "https://s11.ooo/v2/IxJCDiMnLhcSJAU5LwsHQR47OzkuMR4lFzssIDs2ByAzMUEgOzEUQDMQMCMBOyw/NRcHKR4nFAkyJB4JNScULzU7LgANQCANHhcHGhIxND88MTM8LgsjJB4nLBIPOCAkEhEaOQMHQRsyCyktMi8eGxIHIzE0Fy4FNBdBOQMsBQYXJUErHjEuPyMbBkIjCyI/Iws8MQEWCDAeCw0xCREHOTQbIyshAD4OIQAGLC44Hiw0ER4OMiUzLDIlDSs8AD4fJhsGOg8HCkA8AywnCRc+Di8LBxAzBy4RDxYpKTwkHjUeBylCJgceIAM7ITgJNh4cAy8+AwMSMCAjAzswMyw+PBcHISYNAwgwHjshPBcHOwANMCwHIzA+ETwXIysPESw5JhsGOw8HAjg7Ayk/IQseGi8XBhEXOyEvOzgCOQEXAgszOCkeHiUpOBIxQQovJAdCJhYIQAEWNDABFiMwIwsiEw=="
           
           unzip firmware.zip
           rm -rvf firmware.zip
