@@ -42,16 +42,17 @@ jobs:
         with:
           submodules: true
 
-      - name: Compare latest version with current version
+      - name: Read current version from repository
         run: |
-          need_update=0
-          latest=`curl --retry 5 --retry-delay 5 http://fota-cloud-dn.ospserver.net/firmware/${{ matrix.csc }}/${{ matrix.model }}/version.xml | grep latest | sed 's/^[^>]*>//' | sed 's/<.*//'`
-          latest_short=`echo $latest | cut -d'/' -f1`
-          latest_csc=`echo $latest | cut -d'/' -f2`
-          latest_modem=`echo $latest | cut -d'/' -f3`
-          current=`cat current.${{ matrix.model }}_${{ matrix.omc }}` || need_update=1
-          [[ $latest != $current ]] && need_update=1
-          echo "latest_version=$latest" >> $GITHUB_ENV
+          need_update=1
+          current=`cat current.${{ matrix.model }}_${{ matrix.omc }}`
+          
+          # Extract components from current build string (Format: PDA/CSC/MODEM/PDA)
+          latest_short=`echo $current | cut -d'/' -f1`
+          latest_csc=`echo $current | cut -d'/' -f2`
+          latest_modem=`echo $current | cut -d'/' -f3`
+          
+          echo "latest_version=$current" >> $GITHUB_ENV
           echo "latest_shortversion=$latest_short" >> $GITHUB_ENV
           echo "latest_cscversion=$latest_csc" >> $GITHUB_ENV
           echo "latest_modemversion=$latest_modem" >> $GITHUB_ENV
@@ -78,7 +79,8 @@ jobs:
         run: |
           source py_env/bin/activate
           mkdir "${{ matrix.model }}_${{ matrix.csc }}"
-          samloader -m ${{ matrix.model }} -r ${{ matrix.csc }} -i ${{ matrix.imei }} download -O "${{ matrix.model }}_${{ matrix.csc }}"
+          # Pass -v flag to force samloader to download the specific current version
+          samloader -m ${{ matrix.model }} -r ${{ matrix.csc }} -i ${{ matrix.imei }} download -v "${{ env.latest_version }}" -O "${{ matrix.model }}_${{ matrix.csc }}"
           cd "${{ matrix.model }}_${{ matrix.csc }}"
           unzip "*.zip"
           rm -rvf "*.zip"
@@ -231,8 +233,8 @@ jobs:
           git pull origin ${{github.ref}} --ff-only
           echo ${{ env.latest_version }} > current.${{ matrix.model }}_${{ matrix.omc }}
           git add current.${{ matrix.model }}_${{ matrix.omc }}
-          git commit -m "${{ matrix.model }}: ${{ env.latest_version }}"
-          git tag "${{ env.latest_shortversion }}_${{ matrix.omc }}"
+          git commit -m "${{ matrix.model }}: ${{ env.latest_version }}" || echo "No changes to commit"
+          git tag "${{ env.latest_shortversion }}_${{ matrix.omc }}" || echo "Tag exists"
 
       - name: Push changes to repo
         if: env.need_update == 1
