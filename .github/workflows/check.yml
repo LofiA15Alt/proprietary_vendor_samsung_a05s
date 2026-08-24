@@ -156,7 +156,6 @@ jobs:
           rm super.img
           [[ -e vendor.img ]] && zip ${{ env.latest_shortversion }}_vendor.zip vendor.img
           [[ -e vendor_dlkm.img ]] && zip ${{ env.latest_shortversion }}_vendor_dlkm.zip vendor_dlkm.img
-          [[ -e system_dlkm.img ]] && zip ${{ env.latest_shortversion }}_system_dlkm.zip system_dlkm.img
           [[ -e odm.img ]] && zip ${{ env.latest_shortversion }}_odm.zip odm.img
 
       - name: Extract boot partition
@@ -246,7 +245,6 @@ jobs:
             ${{ env.latest_shortversion }}_patched_vbmeta.tar.md5
             ${{ env.latest_shortversion }}_vendor.zip
             ${{ env.latest_shortversion }}_vendor_dlkm.zip
-            ${{ env.latest_shortversion }}_system_dlkm.zip
             ${{ env.latest_shortversion }}_odm.zip
             boot.img
             vendor_boot.img
