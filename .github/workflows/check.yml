@@ -150,7 +150,6 @@ jobs:
           mv super_raw.img super.img
           ./tools/bin/lpdump super.img >> lpdump
           ./tools/bin/lpunpack -p vendor super.img .
-          ./tools/bin/lpunpack -p system_dlkm super.img .
           ./tools/bin/lpunpack -p vendor_dlkm super.img .
           ./tools/bin/lpunpack -p odm super.img .
           rm super.img
