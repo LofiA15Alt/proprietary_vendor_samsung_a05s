@@ -1,5 +1,5 @@
 # proprietary_vendor_samsung_a05s
-Samsung Galaxy A05s / M14 / F14 firmware binaries.
+Samsung Galaxy A15 / A24 / A16 firmware binaries.
 
 ### Credits
 - [@salvogiangri](https://github.com/salvogiangri)
